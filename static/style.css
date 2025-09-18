@@ -1,0 +1,130 @@
+:root{
+    /* Dark theme (defaults) */
+    --bg: #1e1e2f;
+    --text: #e0e0e0;
+    --muted: #c9c9d1;
+    --accent: #ffcc00;
+    --table-bg: #2e2e3f;
+    --th-bg: #4444aa;
+    --row-hover: #3a3a5a;
+    --border: #444;
+    --link: #ffcc00;
+    --checkbox-scale: 1.2;
+
+    /* Progress (green) */
+    --progress-gradient-start: #28a745; /* green */
+    --progress-gradient-end:   #2ecc71; /* lighter green */
+    --progress-text-color:     #ffffff;
+    --toggle-bg: #2e2e3f;
+    --toggle-knob: #ffcc00;
+}
+
+.light-theme {
+    /* Light theme variables */
+    --bg: #f5f6fb;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #1f6feb;
+    --table-bg: #ffffff;
+    --th-bg: #2b6ef6;
+    --row-hover: #f2f4fb;
+    --border: #e6e6ef;
+    --link: #1f6feb;
+    --checkbox-scale: 1.15;
+
+    /* Progress (green for light theme) */
+    --progress-gradient-start: #1e7e34; /* darker green */
+    --progress-gradient-end:   #28a745; /* green */
+    --progress-text-color:     #ffffff;
+    --toggle-bg: #e6e6ef;
+    --toggle-knob: #ffffff;
+}
+
+/* Global styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: var(--accent);
+}
+
+/* Table styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: var(--table-bg);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    background-color: var(--th-bg);
+    color: #fff;
+}
+
+tr:hover {
+    background-color: var(--row-hover);
+}
+
+a {
+    color: var(--link);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Checkbox style */
+input[type="checkbox"] {
+    transform: scale(var(--checkbox-scale));
+    cursor: pointer;
+}
+
+/* Progress bar wrapper and bar */
+#progress-wrapper { margin-bottom: 10px; }
+#progress-container {
+    background-color: rgba(0,0,0,0.08);
+    border-radius: 8px;
+    height: 30px;
+    overflow: hidden;
+}
+#progress-bar {
+    height: 100%;
+    line-height: 30px;
+    text-align: center;
+    color: var(--progress-text-color);
+    font-weight: 700;
+    border-radius: 8px;
+    width: 0%;
+    transition: width 0.45s ease;
+    background: linear-gradient(90deg, var(--progress-gradient-start) 0%, var(--progress-gradient-end) 100%);
+}
+
+/* small helpers */
+.rating { font-weight: 600; color: var(--text); }
+.center { max-width: 1100px; margin: 0 auto; }
+
+/* Toggle (visually tuned in index.html style too) */
+.toggle-btn { box-shadow: inset 0 1px 0 rgba(255,255,255,0.02); border-radius:999px; }
+
+/* ensure links inside table rows are visible in both themes */
+table a { color: var(--link); }
+
+/* responsive */
+@media (max-width: 720px) {
+    th, td { padding: 10px 8px; font-size: 14px; }
+    .center { padding: 0 12px; }
+}
