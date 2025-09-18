@@ -1,19 +1,8 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify
 import json
 import os
-import firebase_admin
-from firebase_admin import credentials, auth
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")  # Use env variable for security
-
-# 🔥 Initialize Firebase Admin using environment variable
-firebase_key = os.environ.get("FIREBASE_KEY_JSON")  # Paste the JSON content in Render env variables
-if not firebase_key:
-    raise ValueError("FIREBASE_KEY_JSON environment variable not set")
-
-cred = credentials.Certificate(json.loads(firebase_key))
-firebase_admin.initialize_app(cred)
 
 DATA_FILE = 'problems.json'
 
@@ -22,6 +11,7 @@ if os.path.exists(DATA_FILE):
     with open(DATA_FILE, 'r') as f:
         problems = json.load(f)
 else:
+    # Minimal fallback (replace with your full 100-problem JSON if needed)
     problems = [
         {"name": "Team", "rating": 800, "link": "https://codeforces.com/problemset/problem/231/A", "completed": False},
         {"name": "Is your horseshoe on the other hoof?", "rating": 800, "link": "https://codeforces.com/problemset/problem/228/A", "completed": False},
@@ -39,52 +29,21 @@ def calc_progress(probs):
     return int((done / total) * 100)
 
 
-# 🔹 Default route → Login first
 @app.route('/')
-def home():
-    if "user" in session:
-        return redirect(url_for("tracker"))
-    return render_template("login.html")
+def index():
+    # serve static template (no Jinja variables inside)
+    return render_template('index.html')
 
 
-# 🔹 Verify Firebase ID token
-@app.route('/verify_token', methods=['POST'])
-def verify_token():
-    try:
-        token = request.json.get("idToken")
-        decoded_token = auth.verify_id_token(token)
-        uid = decoded_token["uid"]
-
-        # Save user in session
-        session["user"] = uid
-        return jsonify({"success": True, "uid": uid})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 401
-
-
-# 🔹 Tracker page (only if logged in)
-@app.route('/tracker')
-def tracker():
-    if "user" not in session:
-        return redirect(url_for("home"))
-    return render_template("tracker.html")
-
-
-# 🔹 Problems API (protected)
 @app.route('/data')
 def data():
-    if "user" not in session:
-        return jsonify({"error": "Unauthorized"}), 401
     progress = calc_progress(problems)
     return jsonify({"problems": problems, "progress": progress})
 
 
-# 🔹 Update API (protected)
 @app.route('/update', methods=['POST'])
 def update():
-    if "user" not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-
+    # Accept both form-encoded and JSON bodies
     if request.is_json:
         payload = request.get_json()
         problem_name = payload.get('name')
@@ -98,6 +57,7 @@ def update():
             problem['completed'] = status
             break
 
+    # Save updated status
     with open(DATA_FILE, 'w') as f:
         json.dump(problems, f, indent=4)
 
@@ -105,12 +65,8 @@ def update():
     return jsonify(success=True, progress=progress)
 
 
-# 🔹 Logout
-@app.route('/logout')
-def logout():
-    session.pop("user", None)
-    return redirect(url_for("home"))
-
-
 if __name__ == '__main__':
+    # debug True for local development
     app.run(debug=True)
+
+
