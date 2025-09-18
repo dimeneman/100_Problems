@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+      body { font-family: 'Segoe UI'; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #1e1e2f; color: #fff; }
+      button { padding: 12px 20px; font-size: 16px; background-color: #4285F4; color: white; border: none; border-radius: 5px; cursor: pointer; }
+      button:hover { background-color: #357ae8; }
+  </style>
+</head>
+<body>
+  <button id="google-login">Login with Google</button>
+
+  <script type="module">
+    // Import Firebase functions
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBjNprbob1H5jmJ2Knw5kaJfDo2jDpP0Ww",
+      authDomain: "codeforces-tracker-ee9df.firebaseapp.com",
+      projectId: "codeforces-tracker-ee9df",
+      storageBucket: "codeforces-tracker-ee9df.appspot.com",
+      messagingSenderId: "719565956559",
+      appId: "1:719565956559:web:9c5034a36550dcf3785eba"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const provider = new GoogleAuthProvider();
+    const loginBtn = document.getElementById("google-login");
+
+    loginBtn.addEventListener("click", () => {
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          console.log("User info:", result.user);
+          window.location.href = "/main"; // Redirect after login
+        })
+        .catch((error) => {
+          console.error("Login error:", error);
+          alert("Login failed! Check console for details.");
+        });
+    });
+  </script>
+</body>
+</html>

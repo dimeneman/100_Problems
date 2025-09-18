@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Rode to 3 star</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <!-- load CSS (dark theme is default) -->
+    <link rel="stylesheet" href="/static/style.css" />
+
+    <!-- Apply saved theme early to avoid flash -->
+    <script>
+        (function() {
+            try {
+                const theme = localStorage.getItem('cftheme');
+                if (theme === 'light') document.documentElement.classList.add('light-theme');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+
+    <style>
+        /* small page-specific tweaks */
+        .center { max-width: 1100px; margin: 0 auto; }
+        header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+        h1 { margin: 0; font-size: 1.6rem; color: var(--accent); }
+        .theme-toggle { display:flex; align-items:center; gap:8px; cursor: pointer; }
+        .toggle-btn {
+            width:46px; height:26px; background:var(--toggle-bg); border-radius:999px; position:relative; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+        }
+        .toggle-knob {
+            width:20px; height:20px; border-radius:50%; background:var(--toggle-knob); position:absolute; top:3px; left:3px; transition: transform .22s ease, left .22s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .light-theme .toggle-knob { left: 23px; }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <header>
+            <h1>Rode to 3 star : By Eman</h1>
+
+            <div class="theme-toggle" role="button" aria-label="Toggle theme" id="themeToggle">
+                <span style="color:var(--muted); font-weight:600;">Theme</span>
+                <div class="toggle-btn" id="toggleBtn" aria-hidden="true">
+                    <div class="toggle-knob" id="toggleKnob"></div>
+                </div>
+            </div>
+        </header>
+
+        <div id="progress-wrapper" aria-hidden="false">
+            <h3 style="margin:6px 0 8px; color: var(--text-muted);">Progress: <span id="progress-text">0%</span></h3>
+            <div id="progress-container" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="progress-bar">0%</div>
+            </div>
+        </div>
+
+        <table id="problems-table" aria-live="polite">
+            <thead>
+                <tr>
+                    <th style="width:80px;">Done</th>
+                    <th>Problem Name</th>
+                    <th style="width:110px;">Rating</th>
+                    <th style="width:80px;">Open</th>
+                </tr>
+            </thead>
+            <tbody id="problems-body"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Theme toggle behavior
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            const isLight = document.documentElement.classList.toggle('light-theme');
+            localStorage.setItem('cftheme', isLight ? 'light' : 'dark');
+        });
+
+        // Fetch data and render
+        async function fetchData() {
+            try {
+                const res = await fetch('/data');
+                const json = await res.json();
+                window.problems = json.problems || [];
+                renderTable(window.problems);
+                setProgress(json.progress || 0);
+            } catch (e) {
+                console.error('Failed to load data', e);
+            }
+        }
+
+        function renderTable(probs) {
+            const body = document.getElementById('problems-body');
+            body.innerHTML = '';
+            probs.forEach(p => {
+                const tr = document.createElement('tr');
+
+                const tdCheck = document.createElement('td');
+                tdCheck.style.textAlign = 'center';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.dataset.name = p.name;
+                checkbox.checked = !!p.completed;
+                checkbox.addEventListener('change', onCheckboxChange);
+                tdCheck.appendChild(checkbox);
+                tr.appendChild(tdCheck);
+
+                const tdName = document.createElement('td');
+                const nameLink = document.createElement('a');
+                nameLink.href = p.link;
+                nameLink.target = '_blank';
+                nameLink.rel = 'noopener noreferrer';
+                nameLink.textContent = p.name;
+                tdName.appendChild(nameLink);
+                tr.appendChild(tdName);
+
+                const tdRating = document.createElement('td');
+                tdRating.className = 'rating';
+                tdRating.textContent = p.rating || '';
+                tr.appendChild(tdRating);
+
+                const tdOpen = document.createElement('td');
+                const smallLink = document.createElement('a');
+                smallLink.href = p.link;
+                smallLink.target = '_blank';
+                smallLink.rel = 'noopener noreferrer';
+                smallLink.textContent = 'Open';
+                tdOpen.appendChild(smallLink);
+                tr.appendChild(tdOpen);
+
+                body.appendChild(tr);
+            });
+        }
+
+        async function onCheckboxChange(evt) {
+            const checkbox = evt.currentTarget;
+            const name = checkbox.dataset.name;
+            const completed = checkbox.checked;
+            const body = `name=${encodeURIComponent(name)}&completed=${completed}`;
+            try {
+                const res = await fetch('/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body
+                });
+                const data = await res.json();
+                if (!data.success) { alert('Server failed to update. Reverting.'); checkbox.checked = !completed; return; }
+                const prob = window.problems.find(p => p.name === name);
+                if (prob) prob.completed = completed;
+                setProgress(data.progress || 0);
+            } catch (e) {
+                alert('Network error. Try again.');
+                checkbox.checked = !completed;
+            }
+        }
+
+        function setProgress(percent) {
+            const clamped = Math.max(0, Math.min(100, percent));
+            const bar = document.getElementById('progress-bar');
+            const text = document.getElementById('progress-text');
+            bar.style.width = clamped + '%';
+            bar.textContent = clamped + '%';
+            text.textContent = clamped + '%';
+            const container = document.getElementById('progress-container');
+            if (container) container.setAttribute('aria-valuenow', clamped);
+        }
+
+        // Initial load
+        fetchData();
+    </script>
+</body>
+</html>
