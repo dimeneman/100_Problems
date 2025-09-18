@@ -5,10 +5,14 @@ import firebase_admin
 from firebase_admin import credentials, auth
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # Needed for session handling
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")  # Use env variable for security
 
-# 🔥 Initialize Firebase Admin
-cred = credentials.Certificate("codeforces-tracker-ee9df-firebase-adminsdk-fbsvc-9404a9c086.json")
+# 🔥 Initialize Firebase Admin using environment variable
+firebase_key = os.environ.get("FIREBASE_KEY_JSON")  # Paste the JSON content in Render env variables
+if not firebase_key:
+    raise ValueError("FIREBASE_KEY_JSON environment variable not set")
+
+cred = credentials.Certificate(json.loads(firebase_key))
 firebase_admin.initialize_app(cred)
 
 DATA_FILE = 'problems.json'
